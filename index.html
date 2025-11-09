@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>날씨 정보 웹앱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #cityInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #cityInput:focus {
+            border-color: #667eea;
+        }
+
+        #searchBtn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #searchBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #searchBtn:active {
+            transform: translateY(0);
+        }
+
+        .weather-info {
+            display: none;
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .location {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .date {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .temperature {
+            font-size: 4em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .condition {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .condition img {
+            width: 50px;
+            height: 50px;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .detail-item {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .error {
+            display: none;
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+            border-left: 4px solid #c62828;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .temperature {
+                font-size: 3em;
+            }
+
+            .details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌤️ 날씨 정보</h1>
+        
+        <div class="search-box">
+            <input type="text" id="cityInput" placeholder="도시 이름을 입력하세요 (예: Seoul, London, New York)">
+            <button id="searchBtn">조회</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>날씨 정보를 불러오는 중...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="weather-info" id="weatherInfo">
+            <div class="location" id="location"></div>
+            <div class="date" id="date"></div>
+            <div class="temperature" id="temperature"></div>
+            <div class="condition" id="condition"></div>
+            
+            <div class="details">
+                <div class="detail-item">
+                    <div class="detail-label">체감 온도</div>
+                    <div class="detail-value" id="feelsLike"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">습도</div>
+                    <div class="detail-value" id="humidity"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">풍속</div>
+                    <div class="detail-value" id="windSpeed"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">기압</div>
+                    <div class="detail-value" id="pressure"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'c4ad237b951d4936b7822820250911';
+        const API_URL = 'https://api.weatherapi.com/v1/current.json';
+
+        const cityInput = document.getElementById('cityInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const weatherInfo = document.getElementById('weatherInfo');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+
+        // 엔터 키로 검색
+        cityInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchBtn.click();
+            }
+        });
+
+        // 검색 버튼 클릭 이벤트
+        searchBtn.addEventListener('click', getWeather);
+
+        async function getWeather() {
+            const city = cityInput.value.trim();
+            
+            if (!city) {
+                showError('도시 이름을 입력해주세요.');
+                return;
+            }
+
+            // UI 상태 초기화
+            hideAll();
+            showLoading();
+
+            try {
+                const url = `${API_URL}?key=${API_KEY}&q=${encodeURIComponent(city)}&lang=ko`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || '날씨 정보를 가져오는 데 실패했습니다.');
+                }
+
+                const data = await response.json();
+                displayWeather(data);
+
+            } catch (err) {
+                showError(err.message || '날씨 정보를 가져오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        function displayWeather(data) {
+            hideAll();
+            
+            const location = data.location;
+            const current = data.current;
+
+            // 위치 정보
+            document.getElementById('location').textContent = `${location.name}, ${location.country}`;
+            
+            // 날짜 정보
+            const date = new Date(location.localtime);
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                weekday: 'long'
+            };
+            document.getElementById('date').textContent = date.toLocaleDateString('ko-KR', options);
+
+            // 온도
+            document.getElementById('temperature').innerHTML = `${current.temp_c}°C`;
+
+            // 날씨 상태
+            const conditionDiv = document.getElementById('condition');
+            conditionDiv.innerHTML = `
+                <img src="${current.condition.icon}" alt="${current.condition.text}">
+                <span>${current.condition.text}</span>
+            `;
+
+            // 상세 정보
+            document.getElementById('feelsLike').textContent = `${current.feelslike_c}°C`;
+            document.getElementById('humidity').textContent = `${current.humidity}%`;
+            document.getElementById('windSpeed').textContent = `${current.wind_kph} km/h`;
+            document.getElementById('pressure').textContent = `${current.pressure_mb} mb`;
+
+            weatherInfo.style.display = 'block';
+        }
+
+        function showLoading() {
+            loading.style.display = 'block';
+            weatherInfo.style.display = 'none';
+            error.style.display = 'none';
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+            loading.style.display = 'none';
+            weatherInfo.style.display = 'none';
+        }
+
+        function hideAll() {
+            loading.style.display = 'none';
+            error.style.display = 'none';
+        }
+
+        // 페이지 로드 시 서울 날씨 자동 조회 (선택사항)
+        window.addEventListener('load', () => {
+            // 자동 조회를 원하지 않으면 아래 줄을 주석 처리하세요
+            // cityInput.value = 'Seoul';
+            // getWeather();
+        });
+    </script>
+</body>
+</html>
